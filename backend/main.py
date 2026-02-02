@@ -371,6 +371,22 @@ async def call_gemma_api(formatted_prompt: str, temperature: float, max_tokens: 
 # API ENDPOINTS
 # ============================================================================
 
+@app.get("/styles.css")
+async def serve_css():
+    """Serve the CSS file with correct content type"""
+    css_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), "frontend", "styles.css")
+    if os.path.exists(css_path):
+        return FileResponse(css_path, media_type="text/css")
+    raise HTTPException(status_code=404, detail="CSS file not found")
+
+@app.get("/script.js")
+async def serve_js():
+    """Serve the JavaScript file with correct content type"""
+    js_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), "frontend", "script.js")
+    if os.path.exists(js_path):
+        return FileResponse(js_path, media_type="application/javascript")
+    raise HTTPException(status_code=404, detail="JS file not found")
+
 @app.get("/")
 async def serve_frontend():
     """Serve the main frontend page"""
