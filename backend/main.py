@@ -41,8 +41,10 @@ LLAMA_API_URL = "https://openrouter.ai/api/v1/chat/completions"
 # Gemma API URL  
 GEMMA_API_URL = "https://openrouter.ai/api/v1/chat/completions"
 # API Keys - hardcoded for Railway deployment
+# ✅ NEW - USE ENVIRONMENT VARIABLES
 LLAMA_API_KEY = os.getenv("OPENROUTER_API_KEY")
 GEMMA_API_KEY = os.getenv("OPENROUTER_API_KEY")
+
 # Get port from environment (Railway sets this automatically)
 PORT = int(os.getenv("PORT", 8080))
 
@@ -301,14 +303,14 @@ def filter_direct_answers(response: str, user_message: str) -> str:
 async def call_llama_api(formatted_prompt: str, temperature: float, max_tokens: int) -> dict:
     """Call OpenRouter API with a working model"""
     llama_request = {
-        "model": "meta-llama/llama-3.2-3b-instruct:free",
+        "model": "meta-llama/llama-3.1-8b-instruct:free",
         "messages": [
             {"role": "system", "content": SYSTEM_PROMPT},
             {"role": "user", "content": formatted_prompt}
         ],
         "temperature": temperature,
         "max_tokens": max_tokens,
-
+        "stream": True
     }
 
     headers = {
@@ -335,14 +337,14 @@ async def call_llama_api(formatted_prompt: str, temperature: float, max_tokens: 
 async def call_gemma_api(formatted_prompt: str, temperature: float, max_tokens: int) -> dict:
     """Call OpenRouter API with Gemma as fallback"""
     gemma_request = {
-        "model": "meta-llama/llama-3.2-3b-instruct:free",
+        "model": "google/gemma-2-9b-it:free",
         "messages": [
             {"role": "system", "content": SYSTEM_PROMPT},
             {"role": "user", "content": formatted_prompt}
         ],
         "temperature": temperature,
         "max_tokens": max_tokens,
-
+        "stream": True
     }
 
     headers = {
@@ -405,7 +407,7 @@ async def test_api_call():
             response = await client.post(
                 LLAMA_API_URL,
                 json={
-                    "model": "meta-llama/llama-3.2-3b-instruct:free",
+                    "model": "meta-llama/llama-3.1-8b-instruct:free",
                     "messages": [{"role": "user", "content": "Hello"}],
                     "max_tokens": 50
                 },
@@ -680,9 +682,3 @@ if __name__ == "__main__":
         log_level="info",
         reload=False
     )
-
-
-
-
-
-
