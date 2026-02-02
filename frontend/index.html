@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EduBot - Educational AI Tutor</title>
+    <link rel="stylesheet" href="styles.css">
+    
+    <!-- MathJax for mathematical notation -->
+    <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script>
+        window.MathJax = {
+            tex: {
+                inlineMath: [['$', '$'], ['\\(', '\\)']],
+                displayMath: [['$$', '$$'], ['\\[', '\\]']]
+            },
+            options: {
+                skipHtmlTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+            }
+        };
+    </script>
+</head>
+<body>
+    <div class="container">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <h1>EduBot</h1>
+                <p class="subtitle">Learn, Don't Cheat</p>
+            </div>
+            
+            <button class="new-chat-btn" id="newChatBtn">
+                <span class="icon">+</span>
+                New Chat
+            </button>
+            
+            <div class="conversations-list" id="conversationsList">
+                <!-- Conversations will be added here dynamically -->
+            </div>
+            
+            <div class="sidebar-footer">
+                <button class="feedback-btn" id="feedbackBtn" title="Share feedback">
+                    <span class="icon">💬</span>
+                </button>
+                <button class="bug-report-btn" id="bugReportBtn" title="Report a bug">
+                    <span class="icon">🐛</span>
+                </button>
+                <button class="theme-toggle" id="themeToggle" title="Toggle dark mode">
+                    <span class="icon">🌙</span>
+                </button>
+            </div>
+        </aside>
+
+        <!-- Main Chat Area -->
+        <main class="chat-container">
+            <!-- Header -->
+            <header class="chat-header">
+                <div class="header-content">
+                    <h2 id="chatTitle">EduBot - Your Educational AI Tutor</h2>
+                    <p class="header-subtitle">Teaching concepts, not giving answers</p>
+                </div>
+                <div class="header-info">
+                    <span class="model-badge">Qwen2.5-3B</span>
+                    <span class="status-indicator" id="statusIndicator">●</span>
+                </div>
+            </header>
+
+            <!-- Messages Area -->
+            <div class="messages-container" id="messagesContainer">
+                <div class="welcome-message">
+                    <div class="welcome-icon">🎓</div>
+                    <h2>Welcome to EduBot</h2>
+                    <p>Your AI-powered educational tutor designed to help you learn and understand concepts.</p>
+                    
+                    <div class="welcome-features">
+                        <div class="feature">
+                            <span class="feature-icon">💡</span>
+                            <h3>Learn Concepts</h3>
+                            <p>Understand the "why" behind topics</p>
+                        </div>
+                        <div class="feature">
+                            <span class="feature-icon">🤔</span>
+                            <h3>Guided Learning</h3>
+                            <p>Socratic questions to guide your thinking</p>
+                        </div>
+                        <div class="feature">
+                            <span class="feature-icon">🎯</span>
+                            <h3>Academic Integrity</h3>
+                            <p>No direct answers to homework or tests</p>
+                        </div>
+                        <div class="feature">
+                            <span class="feature-icon">📚</span>
+                            <h3>Real Examples</h3>
+                            <p>Learn through analogies and real-world scenarios</p>
+                        </div>
+                    </div>
+                    
+                    <div class="example-prompts">
+                        <p class="example-label">Try asking:</p>
+                        <button class="example-btn" onclick="sendMessage('How does photosynthesis work?')">
+                            How does photosynthesis work?
+                        </button>
+                        <button class="example-btn" onclick="sendMessage('Explain the concept of derivatives in calculus')">
+                            Explain derivatives in calculus
+                        </button>
+                        <button class="example-btn" onclick="sendMessage('Help me understand the French Revolution')">
+                            Help me understand the French Revolution
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Input Area -->
+            <div class="input-area">
+                <div class="input-wrapper">
+                    <textarea 
+                        id="messageInput" 
+                        class="message-input" 
+                        placeholder="Ask me anything about your studies... (I'll guide you, not give answers)"
+                        rows="1"
+                    ></textarea>
+                    <button class="send-btn" id="sendBtn" title="Send message (Ctrl+Enter)">
+                        <span class="icon">➤</span>
+                    </button>
+                </div>
+                <p class="input-hint">Press Enter to send • Shift + Enter for new line</p>
+            </div>
+        </main>
+    </div>
+
+    <!-- Loading Indicator -->
+    <div class="loading-indicator" id="loadingIndicator">
+        <div class="spinner"></div>
+        <p>EduBot is thinking...</p>
+    </div>
+
+    <!-- Toast Notifications -->
+    <div class="toast-container" id="toastContainer"></div>
+
+    <!-- Feedback Modal -->
+    <div class="modal-overlay" id="feedbackModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3>Share Your Feedback</h3>
+                <button class="modal-close" onclick="closeFeedbackModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p>Help us improve EduBot! Your feedback is valuable to us.</p>
+                <textarea id="feedbackText" placeholder="What do you think about EduBot? Any suggestions for improvement?" rows="4"></textarea>
+                <div class="modal-actions">
+                    <button class="btn-secondary" onclick="closeFeedbackModal()">Cancel</button>
+                    <button class="btn-primary" onclick="submitFeedback()">Submit Feedback</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bug Report Modal -->
+    <div class="modal-overlay" id="bugReportModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3>Report a Bug</h3>
+                <button class="modal-close" onclick="closeBugReportModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p>Found an issue? Let us know so we can fix it!</p>
+                <textarea id="bugReportText" placeholder="Please describe the bug you encountered. What happened? What did you expect to happen?" rows="4"></textarea>
+                <div class="modal-actions">
+                    <button class="btn-secondary" onclick="closeBugReportModal()">Cancel</button>
+                    <button class="btn-primary" onclick="submitBugReport()">Submit Report</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
