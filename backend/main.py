@@ -47,7 +47,7 @@ LLAMA_API_KEY = os.getenv("LLAMA_API_KEY", "sk-or-v1-f22f42d758ea9c0e9944c3c1c6f
 GEMMA_API_KEY = os.getenv("GEMMA_API_KEY", "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")
 
 # Get port from environment (Railway sets this automatically)
-PORT = int(os.getenv("PORT", 8002))
+PORT = int(os.getenv("PORT", 8080))
 
 # Admin key for accessing feedback
 ADMIN_KEY = os.getenv("ADMIN_KEY", "admin123")
@@ -395,6 +395,17 @@ async def serve_frontend():
         return FileResponse(frontend_path)
     return {"message": "EduBot API is running. Frontend files not found."}
 
+@app.get("/test")
+async def test_endpoint():
+    """Simple test endpoint to check if backend is working"""
+    return {
+        "status": "Backend is working!",
+        "port": PORT,
+        "llama_key_set": bool(LLAMA_API_KEY and LLAMA_API_KEY != "your_openrouter_api_key_here"),
+        "gemma_key_set": bool(GEMMA_API_KEY and GEMMA_API_KEY != "your_openrouter_api_key_here"),
+        "admin_key_set": bool(ADMIN_KEY and ADMIN_KEY != "admin123")
+    }
+
 @app.get("/health")
 async def health_check():
     """Health check endpoint"""
@@ -417,12 +428,12 @@ async def chat(request: ChatRequest):
         if last_message.role != "user":
             raise HTTPException(status_code=400, detail="Last message must be from user")
 
-        # Check if API keys are set
-        if not LLAMA_API_KEY:
-            raise HTTPException(status_code=503, detail="Llama 3.1 API key not configured. Please set LLAMA_API_KEY environment variable.")
+        # Check API keys
+        if not LLAMA_API_KEY or LLAMA_API_KEY == "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":
+            raise HTTPException(status_code=503, detail="Llama 3.1 API key not configured properly. Please check LLAMA_API_KEY environment variable.")
         
-        if not GEMMA_API_KEY:
-            raise HTTPException(status_code=503, detail="Gemma 3 API key not configured. Please set GEMMA_API_KEY environment variable.")
+        if not GEMMA_API_KEY or GEMMA_API_KEY == "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":
+            raise HTTPException(status_code=503, detail="Gemma 3 API key not configured properly. Please check GEMMA_API_KEY environment variable.")
 
         enhanced_message = add_educational_context(last_message.content)
         
@@ -465,6 +476,14 @@ async def chat(request: ChatRequest):
                         if chunk:
                             yield chunk.decode('utf-8', errors='ignore')
                     return
+                else:
+                    logger.error(f"Llama API failed with status {llama_result['status_code']}")
+                    # Try to get error details
+                    try:
+                        error_text = await llama_result["response"].aread()
+                        logger.error(f"Llama API error details: {error_text.decode()}")
+                    except:
+                        pass
                 
                 # If primary model fails, try fallback (Gemma 3 4B)
                 logger.warning(f"Llama API failed with status {llama_result['status_code']}, trying Gemma 3 4B fallback")
@@ -488,7 +507,13 @@ async def chat(request: ChatRequest):
                 # Both models failed
                 error_msg = f"Both Llama and Gemma APIs failed. Llama status: {llama_result['status_code']}, Gemma status: {gemma_result['status_code']}"
                 logger.error(error_msg)
-                yield f"data: {json.dumps({'error': error_msg})}\n\n"
+                
+                # Send a fallback educational response
+                fallback_response = "I'm having trouble connecting to my AI models right now. However, I can still help guide your learning! What subject are you working on? I can ask you guiding questions to help you think through the problem yourself."
+                
+                # Format as SSE
+                yield f"data: {{\"choices\": [{{\"delta\": {{\"content\": \"{fallback_response}\"}}}}]}}\n\n"
+                yield "data: [DONE]\n\n"
                         
             except httpx.RequestError as e:
                 error_msg = f"Connection error to APIs: {str(e)}"
@@ -609,17 +634,20 @@ async def startup_event():
     logger.info(f"Mode: Educational (Anti-Cheating)")
     logger.info(f"Llama API URL: {LLAMA_API_URL}")
     logger.info(f"Gemma API URL: {GEMMA_API_URL}")
-    logger.info(f"API running on: http://localhost:8002")
-    logger.info(f"Docs available at: http://localhost:8002/docs")
+    logger.info(f"API running on: http://localhost:{PORT}")
+    logger.info(f"Docs available at: http://localhost:{PORT}/docs")
     logger.info("=" * 60)
     
-    if not LLAMA_API_KEY:
-        logger.warning("⚠️  Llama 3.1 API key not set. Please set LLAMA_API_KEY environment variable.")
-        logger.warning("⚠️  The backend will not work until the API key is configured.")
+    # Check API keys
+    if not LLAMA_API_KEY or LLAMA_API_KEY == "your_openrouter_api_key_here":
+        logger.error("⚠️  Llama 3.1 API key not set properly. Please set LLAMA_API_KEY environment variable.")
+    else:
+        logger.info(f"✓ Llama API key configured: {LLAMA_API_KEY[:20]}...")
     
-    if not GEMMA_API_KEY:
-        logger.warning("⚠️  Gemma 3 API key not set. Please set GEMMA_API_KEY environment variable.")
-        logger.warning("⚠️  The backend will not work until the API key is configured.")
+    if not GEMMA_API_KEY or GEMMA_API_KEY == "your_openrouter_api_key_here":
+        logger.error("⚠️  Gemma 3 API key not set properly. Please set GEMMA_API_KEY environment variable.")
+    else:
+        logger.info(f"✓ Gemma API key configured: {GEMMA_API_KEY[:20]}...")
 
 @app.on_event("shutdown")
 async def shutdown_event():
