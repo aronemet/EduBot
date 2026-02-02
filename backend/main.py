@@ -301,7 +301,7 @@ def filter_direct_answers(response: str, user_message: str) -> str:
 async def call_llama_api(formatted_prompt: str, temperature: float, max_tokens: int) -> dict:
     """Call OpenRouter API with a working model"""
     llama_request = {
-        "model": "meta-llama/llama-3.1-8b-instruct:free",
+        "model": "arcee-ai/trinity-large-preview:free",
         "messages": [
             {"role": "system", "content": SYSTEM_PROMPT},
             {"role": "user", "content": formatted_prompt}
@@ -335,7 +335,7 @@ async def call_llama_api(formatted_prompt: str, temperature: float, max_tokens: 
 async def call_gemma_api(formatted_prompt: str, temperature: float, max_tokens: int) -> dict:
     """Call OpenRouter API with Gemma as fallback"""
     gemma_request = {
-        "model": "google/gemma-2-9b-it:free",
+        "model": "arcee-ai/trinity-large-preview:free",
         "messages": [
             {"role": "system", "content": SYSTEM_PROMPT},
             {"role": "user", "content": formatted_prompt}
@@ -405,7 +405,7 @@ async def test_api_call():
             response = await client.post(
                 LLAMA_API_URL,
                 json={
-                    "model": "meta-llama/llama-3.1-8b-instruct:free",
+                    "model": "arcee-ai/trinity-large-preview:free",
                     "messages": [{"role": "user", "content": "Hello"}],
                     "max_tokens": 50
                 },
@@ -680,6 +680,7 @@ if __name__ == "__main__":
         log_level="info",
         reload=False
     )
+
 
 
 
