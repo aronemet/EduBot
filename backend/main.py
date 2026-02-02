@@ -301,14 +301,14 @@ def filter_direct_answers(response: str, user_message: str) -> str:
 async def call_llama_api(formatted_prompt: str, temperature: float, max_tokens: int) -> dict:
     """Call OpenRouter API with a working model"""
     llama_request = {
-        "model": "openrouter/free",
+        "model": "meta-llama/llama-3.2-3b-instruct:free",
         "messages": [
             {"role": "system", "content": SYSTEM_PROMPT},
             {"role": "user", "content": formatted_prompt}
         ],
         "temperature": temperature,
         "max_tokens": max_tokens,
-        "stream": True
+
     }
 
     headers = {
@@ -335,14 +335,14 @@ async def call_llama_api(formatted_prompt: str, temperature: float, max_tokens: 
 async def call_gemma_api(formatted_prompt: str, temperature: float, max_tokens: int) -> dict:
     """Call OpenRouter API with Gemma as fallback"""
     gemma_request = {
-        "model": "openrouter/free",
+        "model": "meta-llama/llama-3.2-3b-instruct:free",
         "messages": [
             {"role": "system", "content": SYSTEM_PROMPT},
             {"role": "user", "content": formatted_prompt}
         ],
         "temperature": temperature,
         "max_tokens": max_tokens,
-        "stream": True
+
     }
 
     headers = {
@@ -405,7 +405,7 @@ async def test_api_call():
             response = await client.post(
                 LLAMA_API_URL,
                 json={
-                    "model": "openrouter/free",
+                    "model": "meta-llama/llama-3.2-3b-instruct:free",
                     "messages": [{"role": "user", "content": "Hello"}],
                     "max_tokens": 50
                 },
@@ -680,6 +680,7 @@ if __name__ == "__main__":
         log_level="info",
         reload=False
     )
+
 
 
 
