@@ -299,10 +299,11 @@ def filter_direct_answers(response: str, user_message: str) -> str:
 # ============================================================================
 
 async def call_llama_api(formatted_prompt: str, temperature: float, max_tokens: int) -> dict:
-    """Call Llama 3.1 405B Instruct API"""
+    """Call OpenRouter API with a working model"""
     llama_request = {
-        "model": "google/gemma-2-9b-it",
+        "model": "meta-llama/llama-3.1-8b-instruct:free",
         "messages": [
+            {"role": "system", "content": SYSTEM_PROMPT},
             {"role": "user", "content": formatted_prompt}
         ],
         "temperature": temperature,
@@ -332,10 +333,11 @@ async def call_llama_api(formatted_prompt: str, temperature: float, max_tokens: 
         }
 
 async def call_gemma_api(formatted_prompt: str, temperature: float, max_tokens: int) -> dict:
-    """Call Gemma 3 4B API as fallback"""
+    """Call OpenRouter API with Gemma as fallback"""
     gemma_request = {
-        "model": "google/gemma-2-9b-it",
+        "model": "google/gemma-2-9b-it:free",
         "messages": [
+            {"role": "system", "content": SYSTEM_PROMPT},
             {"role": "user", "content": formatted_prompt}
         ],
         "temperature": temperature,
@@ -434,23 +436,8 @@ async def chat(request: ChatRequest):
 
         enhanced_message = add_educational_context(last_message.content)
         
-        search_context = ""
-        if needs_current_info(last_message.content):
-            search_result = search_web(last_message.content)
-            if search_result != "No current information found.":
-                search_context = f"\n\n[CURRENT INFO] {search_result}\n"
-        
-        recent_messages = request.messages[-3:] if len(request.messages) > 3 else request.messages
-        
-        formatted_prompt = SYSTEM_PROMPT + search_context + "\n\n"
-        
-        for msg in recent_messages[:-1]:
-            if msg.role == "user":
-                formatted_prompt += f"\nuser\n{msg.content}\n"
-            else:
-                formatted_prompt += f"\nassistant\n{msg.content}\n"
-        
-        formatted_prompt += f"\nuser\n{enhanced_message}\nassistant\n"
+        # Simple message format for OpenRouter
+        user_message = last_message.content
         
         logger.info(f"Processing message: {last_message.content[:100]}...")
 
@@ -460,7 +447,7 @@ async def chat(request: ChatRequest):
             try:
                 # Try primary model first
                 llama_result = await call_llama_api(
-                    formatted_prompt,
+                    user_message,
                     request.temperature or TEMPERATURE,
                     request.max_tokens or MAX_TOKENS
                 )
@@ -487,7 +474,7 @@ async def chat(request: ChatRequest):
                 logger.info(f"Attempting to call Gemma 3 4B API: {GEMMA_API_URL}")
                 
                 gemma_result = await call_gemma_api(
-                    formatted_prompt,
+                    user_message,
                     request.temperature or TEMPERATURE,
                     request.max_tokens or MAX_TOKENS
                 )
