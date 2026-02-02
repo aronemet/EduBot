@@ -41,9 +41,8 @@ LLAMA_API_URL = "https://openrouter.ai/api/v1/chat/completions"
 # Gemma API URL  
 GEMMA_API_URL = "https://openrouter.ai/api/v1/chat/completions"
 # API Keys - hardcoded for Railway deployment
-LLAMA_API_KEY = "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"
-GEMMA_API_KEY = "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"
-
+LLAMA_API_KEY = os.getenv("OPENROUTER_API_KEY")
+GEMMA_API_KEY = os.getenv("OPENROUTER_API_KEY")
 # Get port from environment (Railway sets this automatically)
 PORT = int(os.getenv("PORT", 8080))
 
@@ -681,5 +680,6 @@ if __name__ == "__main__":
         log_level="info",
         reload=False
     )
+
 
 
