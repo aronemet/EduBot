@@ -40,11 +40,8 @@ LLAMA_API_URL = "https://openrouter.ai/api/v1/chat/completions"
 
 # Gemma API URL  
 GEMMA_API_URL = "https://openrouter.ai/api/v1/chat/completions"
-LLAMA_API_KEY = os.getenv("LLAMA_API_KEY", "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")
-
-# Gemma 3 4B API Configuration (Fallback)
-
-GEMMA_API_KEY = os.getenv("GEMMA_API_KEY", "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")
+LLAMA_API_KEY = os.getenv("LLAMA_API_KEY")
+GEMMA_API_KEY = os.getenv("GEMMA_API_KEY")
 
 # Get port from environment (Railway sets this automatically)
 PORT = int(os.getenv("PORT", 8080))
@@ -429,11 +426,11 @@ async def chat(request: ChatRequest):
             raise HTTPException(status_code=400, detail="Last message must be from user")
 
         # Check API keys
-        if not LLAMA_API_KEY or LLAMA_API_KEY == "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":
-            raise HTTPException(status_code=503, detail="Llama 3.1 API key not configured properly. Please check LLAMA_API_KEY environment variable.")
+        if not LLAMA_API_KEY:
+            raise HTTPException(status_code=503, detail="Llama API key not set. Please configure LLAMA_API_KEY environment variable.")
         
-        if not GEMMA_API_KEY or GEMMA_API_KEY == "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":
-            raise HTTPException(status_code=503, detail="Gemma 3 API key not configured properly. Please check GEMMA_API_KEY environment variable.")
+        if not GEMMA_API_KEY:
+            raise HTTPException(status_code=503, detail="Gemma API key not set. Please configure GEMMA_API_KEY environment variable.")
 
         enhanced_message = add_educational_context(last_message.content)
         
