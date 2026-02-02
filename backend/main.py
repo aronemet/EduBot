@@ -394,6 +394,45 @@ async def serve_frontend():
         return FileResponse(frontend_path)
     return {"message": "EduBot API is running. Frontend files not found."}
 
+@app.get("/test-api")
+async def test_api_call():
+    """Test OpenRouter API call"""
+    if not LLAMA_API_KEY:
+        return {"error": "No LLAMA_API_KEY found"}
+    
+    try:
+        async with httpx.AsyncClient() as client:
+            response = await client.post(
+                LLAMA_API_URL,
+                json={
+                    "model": "meta-llama/llama-3.1-8b-instruct:free",
+                    "messages": [{"role": "user", "content": "Hello"}],
+                    "max_tokens": 50
+                },
+                headers={
+                    "Authorization": f"Bearer {LLAMA_API_KEY}",
+                    "Content-Type": "application/json"
+                },
+                timeout=10.0
+            )
+            return {
+                "status_code": response.status_code,
+                "response_text": response.text[:500]
+            }
+    except Exception as e:
+        return {"error": str(e)}
+
+@app.get("/debug")
+async def debug_api():
+    """Debug endpoint to check API configuration"""
+    return {
+        "llama_key_exists": bool(LLAMA_API_KEY),
+        "gemma_key_exists": bool(GEMMA_API_KEY),
+        "llama_key_preview": LLAMA_API_KEY[:20] + "..." if LLAMA_API_KEY else "None",
+        "gemma_key_preview": GEMMA_API_KEY[:20] + "..." if GEMMA_API_KEY else "None",
+        "api_url": LLAMA_API_URL
+    }
+
 @app.get("/test")
 async def test_endpoint():
     """Simple test endpoint to check if backend is working"""
@@ -651,3 +690,4 @@ if __name__ == "__main__":
         log_level="info",
         reload=False
     )
+    
